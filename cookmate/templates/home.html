@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CookMate – Cook Smarter</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<nav class="navbar">
+    <a href="/" class="brand">
+        <svg class="brand-icon" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M16 3C10 3 5 8 5 15c0 5.5 3.5 10.2 8.5 11.8V28h5v-1.2C23.5 25.2 27 20.5 27 15c0-7-5-12-11-12z"
+                  fill="var(--green)" opacity="0.18"/>
+            <path d="M16 3c-1 4-3 7-6 9 1 4 4 7 6 8 2-1 5-4 6-8-3-2-5-5-6-9z"
+                  fill="var(--green)"/>
+            <line x1="16" y1="20" x2="16" y2="28" stroke="var(--green)" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+        CookMate
+    </a>
+
+    <div class="nav-right">
+        {% if logged_in %}
+            <a href="/dashboard">Dashboard</a>
+            <a href="/logout" class="nav-logout">Logout</a>
+        {% else %}
+            <a href="/login">Login</a>
+            <a href="/register" class="btn" style="margin:0;padding:8px 16px;font-size:13px;">Get Started</a>
+        {% endif %}
+        <button class="theme-toggle" id="theme-toggle" title="Toggle theme" aria-label="Toggle colour theme">🌙</button>
+    </div>
+</nav>
+
+<!-- HERO -->
+<section class="home-hero">
+    <span class="hero-eyebrow">🌿 Smart Kitchen Companion</span>
+    <h1 class="hero-title">Turn your fridge<br>into a <em>feast</em></h1>
+    <p class="hero-desc">
+        Tell CookMate what's in your kitchen and get a real, properly named recipe — matched to your chosen cuisine — instantly.
+    </p>
+    <div class="hero-cta">
+        {% if logged_in %}
+            <a href="/dashboard" class="btn btn-lg">Open Kitchen →</a>
+        {% else %}
+            <a href="/register" class="btn btn-lg">Start Cooking Free</a>
+            <a href="/login"    class="btn btn-ghost btn-lg">Sign In</a>
+        {% endif %}
+    </div>
+</section>
+
+<!-- SCROLLING CUISINE TICKER -->
+<div class="cuisine-strip">
+    <div class="cuisine-strip-inner">
+        {% set dishes = [
+            ("🍛","Paneer Butter Masala"), ("🥡","Kung Pao Chicken"),
+            ("🍝","Mushroom Risotto"),     ("🍜","Chicken Teriyaki"),
+            ("🌮","Veggie Tacos"),         ("🍲","Aloo Sabzi"),
+            ("🥢","Mapo Tofu"),            ("🍋","Pasta Pomodoro"),
+            ("🥘","Nikujaga Stew"),        ("🌶️","Pollo Mexicana")
+        ] %}
+        {# duplicated for seamless loop #}
+        {% for _ in range(2) %}
+            {% for emoji, name in dishes %}
+                <span class="cuisine-chip">{{ emoji }} {{ name }}</span>
+            {% endfor %}
+        {% endfor %}
+    </div>
+</div>
+
+<!-- FEATURES -->
+<div style="padding:0 24px 0">
+    <div class="home-features">
+        <div class="feat-card">
+            <div class="feat-number">01</div>
+            <h3>Ingredient-First</h3>
+            <p>Type what you have — tomato, paneer, garlic — no shopping list required.</p>
+        </div>
+        <div class="feat-card">
+            <div class="feat-number">02</div>
+            <h3>5 Cuisines</h3>
+            <p>Indian, Chinese, Italian, Japanese, Mexican — every dish matched to the right style.</p>
+        </div>
+        <div class="feat-card">
+            <div class="feat-number">03</div>
+            <h3>Real Dish Names</h3>
+            <p>Get proper names like Paneer Butter Masala, not vague ingredient combos.</p>
+        </div>
+        <div class="feat-card">
+            <div class="feat-number">04</div>
+            <h3>Chef-Style Steps</h3>
+            <p>Detailed, authentic cooking steps written the way a chef would explain them.</p>
+        </div>
+    </div>
+</div>
+
+<!-- CTA BANNER -->
+<div style="padding:0 24px 80px">
+    <div class="home-cta">
+        <h2>What's in your fridge right now?</h2>
+        <p>Enter your ingredients and get a recipe in seconds.</p>
+        {% if logged_in %}
+            <a href="/dashboard" class="btn btn-lg">Go to Kitchen →</a>
+        {% else %}
+            <a href="/register"  class="btn btn-lg">Try It Free →</a>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+/* ── Theme management (same logic as base.html) ─────────────────────────── */
+(function () {
+    const STORAGE_KEY = 'cm-theme';
+    const toggle      = document.getElementById('theme-toggle');
+    const html        = document.documentElement;
+    const ICONS       = { light: '🌙', dark: '☀️', system: '💻' };
+    const CYCLE       = ['light', 'dark', 'system'];
+
+    function getStored() { return localStorage.getItem(STORAGE_KEY) || 'system'; }
+
+    function applyTheme(theme) {
+        theme === 'system'
+            ? html.removeAttribute('data-theme')
+            : html.setAttribute('data-theme', theme);
+        toggle.textContent = ICONS[theme];
+        toggle.title       = `Theme: ${theme} — click to change`;
+    }
+
+    function cycleTheme() {
+        const next = CYCLE[(CYCLE.indexOf(getStored()) + 1) % CYCLE.length];
+        localStorage.setItem(STORAGE_KEY, next);
+        applyTheme(next);
+    }
+
+    applyTheme(getStored());
+    toggle.addEventListener('click', cycleTheme);
+})();
+</script>
+
+</body>
+</html>

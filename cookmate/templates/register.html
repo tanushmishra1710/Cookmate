@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register – CookMate</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<div class="auth-page">
+
+    <!-- Left decorative panel -->
+    <div class="auth-left">
+        <div class="auth-left-logo">
+            <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M16 3C10 3 5 8 5 15c0 5.5 3.5 10.2 8.5 11.8V28h5v-1.2C23.5 25.2 27 20.5 27 15c0-7-5-12-11-12z"
+                      fill="white" opacity="0.25"/>
+                <path d="M16 3c-1 4-3 7-6 9 1 4 4 7 6 8 2-1 5-4 6-8-3-2-5-5-6-9z" fill="white"/>
+                <line x1="16" y1="20" x2="16" y2="28" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+            CookMate
+        </div>
+        <div class="auth-left-content">
+            <h2>Cook smarter,<br>not <em>harder</em></h2>
+            <p>Create your free account and get real recipes for any cuisine — just from ingredients you already have.</p>
+        </div>
+        <div class="auth-cuisines">
+            <span class="auth-cuisine-pill">🍛 Indian</span>
+            <span class="auth-cuisine-pill">🥢 Chinese</span>
+            <span class="auth-cuisine-pill">🍝 Italian</span>
+            <span class="auth-cuisine-pill">🍜 Japanese</span>
+            <span class="auth-cuisine-pill">🌮 Mexican</span>
+        </div>
+    </div>
+
+    <!-- Right form panel -->
+    <div class="auth-right">
+        <button class="theme-toggle" id="theme-toggle"
+                style="position:absolute;top:20px;right:20px"
+                title="Toggle theme" aria-label="Toggle colour theme">🌙</button>
+
+        <div class="auth-form-box">
+            <h1>Create account</h1>
+            <p class="auth-sub">Free forever. No credit card needed.</p>
+
+            {% if error %}<div class="error-msg">{{ error }}</div>{% endif %}
+
+            <form method="POST">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" placeholder="e.g. chef_arun" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" placeholder="you@example.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" placeholder="Min. 6 characters" required>
+                </div>
+                <button type="submit" class="auth-submit">Create Account →</button>
+            </form>
+
+            <p class="auth-footer-link">Already have an account? <a href="/login">Sign in</a></p>
+        </div>
+    </div>
+
+</div>
+
+<script>
+(function () {
+    const STORAGE_KEY = 'cm-theme';
+    const toggle      = document.getElementById('theme-toggle');
+    const html        = document.documentElement;
+    const ICONS       = { light: '🌙', dark: '☀️', system: '💻' };
+    const CYCLE       = ['light', 'dark', 'system'];
+
+    function getStored() { return localStorage.getItem(STORAGE_KEY) || 'system'; }
+
+    function applyTheme(theme) {
+        theme === 'system'
+            ? html.removeAttribute('data-theme')
+            : html.setAttribute('data-theme', theme);
+        toggle.textContent = ICONS[theme];
+        toggle.title       = `Theme: ${theme} — click to change`;
+    }
+
+    function cycleTheme() {
+        const next = CYCLE[(CYCLE.indexOf(getStored()) + 1) % CYCLE.length];
+        localStorage.setItem(STORAGE_KEY, next);
+        applyTheme(next);
+    }
+
+    applyTheme(getStored());
+    toggle.addEventListener('click', cycleTheme);
+})();
+</script>
+
+</body>
+</html>

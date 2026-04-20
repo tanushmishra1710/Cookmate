@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="dash-page">
+
+    <div class="dash-header">
+        <p class="dash-greeting">Your Kitchen</p>
+        <h1 class="dash-title">Hello, <span>{{ username }}</span>.<br>What are we cooking?</h1>
+    </div>
+
+    <div class="dash-grid">
+
+        <!-- Form card -->
+        <div class="form-card">
+            <p class="form-card-title">Build Your Recipe</p>
+
+            <form method="POST" action="/generate-recipe" id="recipe-form">
+                <input type="hidden" name="ingredients" id="ingredients-hidden">
+                <input type="hidden" name="cuisine"     id="cuisine-hidden">
+
+                <!-- Ingredient tag input -->
+                <div class="ingredient-field">
+                    <label>Ingredients</label>
+                    <div class="tag-input-wrapper" id="tag-wrapper">
+                        <input type="text" id="tag-input" class="tag-input"
+                               placeholder="Type ingredient, press Enter…" autocomplete="off">
+                    </div>
+                    <p class="tag-hint">Press <strong>Enter</strong> or <strong>,</strong> to add · Backspace to remove last</p>
+                </div>
+
+                <!-- Cuisine selector -->
+                <div class="cuisine-selector">
+                    <label>Cuisine Style</label>
+                    <div class="cuisine-grid">
+                        {% for emoji, name in [('🍛','Indian'),('🥢','Chinese'),('🍝','Italian'),('🍜','Japanese'),('🌮','Mexican')] %}
+                        <button type="button" class="cuisine-btn" data-cuisine="{{ name }}">
+                            <span class="cuisine-emoji">{{ emoji }}</span>{{ name }}
+                        </button>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <button type="submit" class="generate-btn" id="gen-btn">
+                    <span id="btn-icon">🍳</span>
+                    <span id="btn-text">Generate Recipe</span>
+                </button>
+            </form>
+        </div>
+
+        <!-- Recipe output -->
+        <div class="recipe-card">
+            {% if recipe %}
+            <div class="recipe-result">
+                <div class="recipe-banner">
+                    <span class="recipe-cuisine-tag">{{ request.form.get('cuisine', 'Recipe') }}</span>
+                    <h2 class="recipe-name">{{ recipe.title }}</h2>
+                </div>
+                <div class="recipe-body">
+                    <p class="recipe-section-label">Ingredients Used</p>
+                    <div class="ingredient-tags">
+                        {% for ing in recipe.ingredients.split(',') %}
+                            <span class="ing-tag">{{ ing.strip() }}</span>
+                        {% endfor %}
+                    </div>
+
+                    <p class="recipe-section-label">Cooking Steps</p>
+                    <ol class="steps-list">
+                        {% for step in recipe.steps %}
+                        <li class="step-item">
+                            <span class="step-num">{{ '%02d' % loop.index }}</span>
+                            <span class="step-text">{{ step }}</span>
+                        </li>
+                        {% endfor %}
+                    </ol>
+                </div>
+            </div>
+            {% else %}
+            <div class="recipe-card-empty">
+                <div class="recipe-empty-icon">🥘</div>
+                <p class="recipe-empty-title">Your recipe will appear here</p>
+                <p class="recipe-empty-sub">Add ingredients → choose a cuisine → hit Generate</p>
+            </div>
+            {% endif %}
+        </div>
+
+    </div>
+</div>
+
+<script>
+/* ── Ingredient tag input ──────────────────────────────────────────────── */
+const tags       = [];
+const wrapper    = document.getElementById('tag-wrapper');
+const tagInput   = document.getElementById('tag-input');
+const hiddenIngs = document.getElementById('ingredients-hidden');
+
+wrapper.addEventListener('click', () => tagInput.focus());
+
+function renderTags() {
+    wrapper.querySelectorAll('.tag').forEach(el => el.remove());
+    tags.forEach((tag, i) => {
+        const el = document.createElement('span');
+        el.className = 'tag';
+        el.innerHTML = `${tag} <span class="tag-remove" data-i="${i}">×</span>`;
+        wrapper.insertBefore(el, tagInput);
+    });
+    hiddenIngs.value = tags.join(', ');
+}
+
+function addTag(raw) {
+    const val = raw.trim().replace(/,/g, '');
+    if (val && !tags.includes(val)) { tags.push(val); renderTags(); }
+    tagInput.value = '';
+}
+
+tagInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter')     { e.preventDefault(); addTag(tagInput.value); }
+    if (e.key === 'Backspace' && !tagInput.value && tags.length) { tags.pop(); renderTags(); }
+});
+
+tagInput.addEventListener('input', () => {
+    if (tagInput.value.endsWith(',')) addTag(tagInput.value);
+});
+
+wrapper.addEventListener('click', e => {
+    if (e.target.classList.contains('tag-remove')) {
+        tags.splice(+e.target.dataset.i, 1);
+        renderTags();
+    }
+});
+
+// Restore tags after form submission
+{% if request.form.get('ingredients') %}
+'{{ request.form.get("ingredients") }}'.split(',').forEach(t => { const v = t.trim(); if (v) tags.push(v); });
+renderTags();
+{% endif %}
+
+/* ── Cuisine selector ──────────────────────────────────────────────────── */
+const cuisineBtns   = document.querySelectorAll('.cuisine-btn');
+const hiddenCuisine = document.getElementById('cuisine-hidden');
+let   selectedCuisine = '{{ request.form.get("cuisine", "") }}';
+
+cuisineBtns.forEach(btn => {
+    if (btn.dataset.cuisine === selectedCuisine) btn.classList.add('selected');
+    btn.addEventListener('click', () => {
+        cuisineBtns.forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        selectedCuisine      = btn.dataset.cuisine;
+        hiddenCuisine.value  = selectedCuisine;
+    });
+});
+
+/* ── Form validation & submit state ───────────────────────────────────── */
+document.getElementById('recipe-form').addEventListener('submit', e => {
+    if (!tags.length) {
+        e.preventDefault();
+        tagInput.placeholder = '⚠ Add at least one ingredient!';
+        tagInput.focus();
+        return;
+    }
+    if (!selectedCuisine) {
+        e.preventDefault();
+        document.querySelector('.cuisine-selector label').style.color = 'var(--danger)';
+        return;
+    }
+    const btn = document.getElementById('gen-btn');
+    document.getElementById('btn-icon').textContent = '⏳';
+    document.getElementById('btn-text').textContent = 'Generating…';
+    btn.disabled = true;
+    btn.style.opacity = '0.75';
+});
+</script>
+{% endblock %}
