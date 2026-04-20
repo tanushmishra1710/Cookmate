@@ -3,9 +3,12 @@ CookMate – Flask application
 No AI dependencies. Pure rule-based recipe matching.
 """
 
+import os
 import sqlite3
 from flask import Flask, render_template, request, redirect, url_for, session
 from werkzeug.security import generate_password_hash, check_password_hash
+port = int(os.environ.get("PORT", 5000))
+app.run(host="0.0.0.0", port=port)
 
 # ---------------------------------------------------------------------------
 # App setup
@@ -451,4 +454,5 @@ if __name__ == '__main__':
     ''')
     db.commit()
     db.close()
-    app.run(debug=True)
+    if __name__ == "__main__":
+    app.run()
